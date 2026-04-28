@@ -1,0 +1,6 @@
+SELECT TOP (1000) [id]
+         ,[nombre]
+		 ,[telefono]
+		 ,[correo]
+		 ,[nombre]
+   FROM [restaurante_501].[dbo].[Cliente]
