@@ -1,35 +1,41 @@
 {% extends 'gestion/base.html' %}
+{% load static %}
+
+{% block title %}Panel Principal — Pasta La Vista{% endblock %}
 
 {% block content %}
-<h2>Panel principal</h2>
+<h2 class="page-title">Panel Principal</h2>
 
-<div class="card">
+<div class="cards-grid">
+  <div class="card">
+    <span class="card-icon">👥</span>
     <h3>Clientes</h3>
-    <p>{{ total_clientes }}</p>
-</div>
-
-<div class="card">
+    <div class="card-number">{{ total_clientes }}</div>
+  </div>
+  <div class="card">
+    <span class="card-icon">👨‍🍳</span>
     <h3>Empleados</h3>
-    <p>{{ total_empleados }}</p>
-</div>
-
-<div class="card">
+    <div class="card-number">{{ total_empleados }}</div>
+  </div>
+  <div class="card">
+    <span class="card-icon">🪑</span>
     <h3>Mesas</h3>
-    <p>{{ total_mesas }}</p>
-</div>
-
-<div class="card">
+    <div class="card-number">{{ total_mesas }}</div>
+  </div>
+  <div class="card">
+    <span class="card-icon">🍽️</span>
     <h3>Platos</h3>
-    <p>{{ total_platos }}</p>
-</div>
-
-<div class="card">
+    <div class="card-number">{{ total_platos }}</div>
+  </div>
+  <div class="card">
+    <span class="card-icon">📋</span>
     <h3>Órdenes</h3>
-    <p>{{ total_ordenes }}</p>
-</div>
-
-<div class="card">
+    <div class="card-number">{{ total_ordenes }}</div>
+  </div>
+  <div class="card">
+    <span class="card-icon">🧾</span>
     <h3>Facturas</h3>
-    <p>{{ total_facturas }}</p>
+    <div class="card-number">{{ total_facturas }}</div>
+  </div>
 </div>
 {% endblock %}

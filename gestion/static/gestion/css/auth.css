@@ -1,0 +1,96 @@
+/* ============================================================
+   PASTA LA VISTA — auth.css
+   Estilos para login y registro
+   ============================================================ */
+
+.auth-page {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #6b0000 0%, var(--rojo) 50%, #8B0000 100%);
+  padding: 30px 20px;
+}
+
+.auth-card {
+  background: var(--blanco);
+  border-radius: 16px;
+  padding: 40px 44px;
+  width: 100%;
+  max-width: 420px;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.25);
+  position: relative;
+  overflow: hidden;
+}
+
+.auth-card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 5px;
+  background: linear-gradient(90deg, var(--rojo), #ffcc80, var(--rojo));
+}
+
+.auth-logo {
+  text-align: center;
+  margin-bottom: 28px;
+}
+
+.auth-logo .logo-icon {
+  font-size: 3rem;
+  display: block;
+  margin-bottom: 8px;
+}
+
+.auth-logo h2 {
+  font-family: 'Playfair Display', serif;
+  font-size: 1.5rem;
+  color: var(--rojo);
+  margin-bottom: 4px;
+}
+
+.auth-logo p {
+  font-size: 0.85rem;
+  color: var(--gris-texto);
+}
+
+.auth-divider {
+  text-align: center;
+  margin: 22px 0;
+  position: relative;
+  color: var(--gris-texto);
+  font-size: 0.85rem;
+}
+
+.auth-divider::before,
+.auth-divider::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  width: 40%;
+  height: 1px;
+  background: var(--gris-borde);
+}
+.auth-divider::before { left: 0; }
+.auth-divider::after  { right: 0; }
+
+.auth-footer-link {
+  text-align: center;
+  margin-top: 20px;
+  font-size: 0.88rem;
+  color: var(--gris-texto);
+}
+
+.auth-footer-link a {
+  color: var(--rojo);
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.auth-footer-link a:hover { text-decoration: underline; }
+
+/* Botón full-width para auth */
+.btn-full { width: 100%; justify-content: center; padding: 12px 18px; font-size: 1rem; }
+
+/* Error messages inside auth */
+.auth-card .alert { font-size: 0.86rem; }

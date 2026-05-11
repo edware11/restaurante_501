@@ -1,0 +1,41 @@
+{% extends 'gestion/base.html' %}
+
+{% block title %}{% if objeto %}Editar{% else %}Nuevo{% endif %} Empleado — Pasta La Vista{% endblock %}
+
+{% block content %}
+<h2 class="page-title">{% if objeto %}✏️ Editar Empleado{% else %}➕ Nuevo Empleado{% endif %}</h2>
+
+<div class="form-container">
+  <form method="post">
+    {% csrf_token %}
+    <div class="form-group">
+      <label>Nombre</label>
+      <input type="text" name="nombre" value="{{ objeto.nombre|default:'' }}" required>
+    </div>
+    <div class="form-group">
+      <label>Cargo</label>
+      <select name="cargo">
+        <option value="Mesero"        {% if objeto.cargo == 'Mesero'        %}selected{% endif %}>Mesero</option>
+        <option value="Mesera"        {% if objeto.cargo == 'Mesera'        %}selected{% endif %}>Mesera</option>
+        <option value="Cajero"        {% if objeto.cargo == 'Cajero'        %}selected{% endif %}>Cajero</option>
+        <option value="Cajera"        {% if objeto.cargo == 'Cajera'        %}selected{% endif %}>Cajera</option>
+        <option value="Administrador" {% if objeto.cargo == 'Administrador' %}selected{% endif %}>Administrador</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label>Teléfono</label>
+      <input type="text" name="telefono" value="{{ objeto.telefono|default:'' }}">
+    </div>
+    <div class="form-group">
+      <label>Correo</label>
+      <input type="email" name="correo" value="{{ objeto.correo|default:'' }}">
+    </div>
+    <div class="form-actions">
+      <button type="submit" class="btn btn-primary">
+        {% if objeto %}💾 Guardar cambios{% else %}✅ Crear empleado{% endif %}
+      </button>
+      <a href="{% url 'empleados' %}" class="btn btn-secondary">← Cancelar</a>
+    </div>
+  </form>
+</div>
+{% endblock %}

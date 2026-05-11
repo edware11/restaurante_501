@@ -1,0 +1,53 @@
+/* ============================================================
+   COLOR THEME — Azul Océano
+   Para cambiar el color del sitio, edita solo este archivo
+   ============================================================ */
+
+:root {
+  --rojo:       #006994;
+  --rojo-nav:   #0085b8;
+  --rojo-hover: #005a7a;
+  --crema:      #eaf6fb;
+  --gris-claro: #f0f8fc;
+}
+
+/* Header */
+header {
+  background: linear-gradient(135deg, #006994 0%, #004a6b 100%) !important;
+}
+
+/* Navegación */
+nav {
+  background-color: #0085b8 !important;
+}
+
+/* Títulos de sección */
+.page-title {
+  color: #006994 !important;
+}
+
+/* Número en tarjetas del dashboard */
+.card-number {
+  color: #006994 !important;
+}
+
+/* Botón primario */
+.btn-primary {
+  background-color: #006994 !important;
+}
+.btn-primary:hover {
+  background-color: #005a7a !important;
+}
+
+/* Tabla header */
+thead {
+  background: linear-gradient(135deg, #006994, #005a7a) !important;
+}
+
+/* Input focus */
+.form-group input:focus,
+.form-group select:focus,
+.form-group textarea:focus {
+  border-color: #006994 !important;
+  box-shadow: 0 0 0 3px rgba(0,105,148,0.1) !important;
+}

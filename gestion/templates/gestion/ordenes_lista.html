@@ -1,0 +1,54 @@
+{% extends 'gestion/base.html' %}
+
+{% block title %}Órdenes — Pasta La Vista{% endblock %}
+
+{% block content %}
+<h2 class="page-title">📋 Órdenes</h2>
+
+<div class="toolbar">
+  <a href="{% url 'orden_crear' %}" class="btn btn-primary">➕ Nueva Orden</a>
+</div>
+
+<div class="table-container">
+  <table>
+    <thead>
+      <tr>
+        <th>#</th><th>Mesa</th><th>Empleado</th><th>Cliente</th>
+        <th>Fecha</th><th>Estado</th><th>Acciones</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for o in ordenes %}
+      <tr>
+        <td>{{ o.pk }}</td>
+        <td>Mesa {{ o.id_mesa.numero_mesa }}</td>
+        <td>{{ o.id_empleado.nombre }}</td>
+        <td>{% if o.id_cliente %}{{ o.id_cliente.nombre }}{% else %}—{% endif %}</td>
+        <td>{{ o.fecha_orden|date:"d/m/Y H:i" }}</td>
+        <td>
+          <span style="
+            background:{% if o.estado == 'entregada' %}#dcfce7;color:#166534
+            {% elif o.estado == 'cancelada' %}#fee2e2;color:#991b1b
+            {% elif o.estado == 'pendiente' %}#fef9c3;color:#854d0e
+            {% else %}#dbeafe;color:#1e40af{% endif %};
+            padding:3px 10px;border-radius:12px;font-size:0.82rem;font-weight:600;">
+            {{ o.get_estado_display }}
+          </span>
+        </td>
+        <td>
+          <a href="{% url 'orden_editar' o.pk %}" class="btn btn-secondary btn-sm">✏️ Editar</a>
+          <a href="{% url 'orden_eliminar' o.pk %}" class="btn btn-danger btn-sm"
+             onclick="return confirm('¿Eliminar orden #{{ o.pk }}?')">🗑️</a>
+        </td>
+      </tr>
+      {% empty %}
+      <tr>
+        <td colspan="7" style="text-align:center;padding:30px;color:#999;">
+          Sin órdenes registradas. <a href="{% url 'orden_crear' %}">Crear la primera</a>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

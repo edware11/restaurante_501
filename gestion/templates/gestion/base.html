@@ -1,85 +1,60 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <meta charset="UTF-8">
-    <title>Restaurante Pasta La Vista</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            background-color: #f4f4f4;
-            margin: 0;
-            padding: 0;
-        }
-        header {
-            background-color: #8B0000;
-            color: white;
-            padding: 15px;
-            text-align: center;
-        }
-        nav {
-            background-color: #b22222;
-            padding: 10px;
-            text-align: center;
-        }
-        nav a {
-            color: white;
-            margin: 0 12px;
-            text-decoration: none;
-            font-weight: bold;
-        }
-        .contenedor {
-            width: 90%;
-            margin: 20px auto;
-            background: white;
-            padding: 20px;
-            border-radius: 8px;
-        }
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 15px;
-        }
-        table, th, td {
-            border: 1px solid #ccc;
-        }
-        th, td {
-            padding: 10px;
-            text-align: left;
-        }
-        th {
-            background-color: #eee;
-        }
-        .card {
-            display: inline-block;
-            width: 200px;
-            background: #fafafa;
-            border: 1px solid #ddd;
-            border-radius: 8px;
-            padding: 15px;
-            margin: 10px;
-            text-align: center;
-        }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% block title %}Pasta La Vista{% endblock %}</title>
+
+  {% load static %}
+  <link rel="stylesheet" href="{% static 'gestion/css/styles.css' %}">
+  <link rel="stylesheet" href="{% static 'gestion/css/color.css' %}">
+  {% block extra_css %}{% endblock %}
 </head>
 <body>
-    <header>
-        <h1>Sistema de Gestión de Pedidos - Pasta La Vista</h1>
-    </header>
 
-    <nav>
-        <a href="/">Inicio</a>
-        <a href="/clientes/">Clientes</a>
-        <a href="/empleados/">Empleados</a>
-        <a href="/mesas/">Mesas</a>
-        <a href="/platos/">Platos</a>
-        <a href="/ordenes/">Órdenes</a>
-        <a href="/facturas/">Facturas</a>
-        <a href="/admin/">Admin</a>
-    </nav>
+  <!-- HEADER -->
+  <header>
+    <h1>🍝 Sistema de Gestión de Pedidos — <span>Pasta La Vista</span></h1>
+  </header>
 
-    <div class="contenedor">
-        {% block content %}
-        {% endblock %}
+  <!-- NAVEGACIÓN -->
+  <nav>
+    <a href="{% url 'inicio' %}"       {% if request.resolver_match.url_name == 'inicio'     %}class="active"{% endif %}>Inicio</a>
+    <a href="{% url 'clientes' %}"     {% if 'cliente' in request.resolver_match.url_name    %}class="active"{% endif %}>Clientes</a>
+    <a href="{% url 'empleados' %}"    {% if 'empleado' in request.resolver_match.url_name   %}class="active"{% endif %}>Empleados</a>
+    <a href="{% url 'mesas' %}"        {% if 'mesa' in request.resolver_match.url_name        %}class="active"{% endif %}>Mesas</a>
+    <a href="{% url 'platos' %}"       {% if 'plato' in request.resolver_match.url_name       %}class="active"{% endif %}>Platos</a>
+    <a href="{% url 'ordenes' %}"      {% if 'orden' in request.resolver_match.url_name       %}class="active"{% endif %}>Órdenes</a>
+    <a href="{% url 'facturas' %}"     {% if 'factura' in request.resolver_match.url_name     %}class="active"{% endif %}>Facturas</a>
+    {% if user.is_authenticated %}
+      <a href="{% url 'logout' %}"     style="margin-left:auto;">👤 {{ user.username }} | Salir</a>
+    {% else %}
+      <a href="{% url 'login' %}"      {% if request.resolver_match.url_name == 'login'      %}class="active"{% endif %}>🔑 Login</a>
+    {% endif %}
+    <a href="/admin/"                  target="_blank">⚙️ Admin</a>
+  </nav>
+
+  <!-- MENSAJES DJANGO -->
+  <main>
+    {% if messages %}
+    <div class="messages-container">
+      {% for message in messages %}
+      <div class="alert alert-{{ message.tags }}">
+        {% if message.tags == 'success' %}✅{% elif message.tags == 'error' %}❌{% else %}ℹ️{% endif %}
+        {{ message }}
+      </div>
+      {% endfor %}
     </div>
+    {% endif %}
+
+    {% block content %}{% endblock %}
+  </main>
+
+  <!-- FOOTER -->
+  <footer>
+    <p>© 2026 <span>Pasta La Vista</span> — Sistema de Información Restaurante</p>
+  </footer>
+
+  {% block extra_js %}{% endblock %}
 </body>
 </html>

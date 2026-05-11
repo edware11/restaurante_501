@@ -1,0 +1,70 @@
+{% extends 'gestion/base.html' %}
+
+{% block title %}{% if objeto %}Editar{% else %}Nueva{% endif %} Orden — Pasta La Vista{% endblock %}
+
+{% block content %}
+<h2 class="page-title">{% if objeto %}✏️ Editar Orden #{{ objeto.id_orden }}{% else %}➕ Nueva Orden{% endif %}</h2>
+
+<div class="form-container">
+  <form method="post">
+    {% csrf_token %}
+
+    <div class="form-group">
+      <label>Mesa</label>
+      <select name="id_mesa" required>
+        <option value="">— Selecciona una mesa —</option>
+        {% for mesa in mesas %}
+          <option value="{{ mesa.id_mesa }}"
+            {% if objeto.id_mesa.id_mesa == mesa.id_mesa %}selected{% endif %}>
+            Mesa {{ mesa.numero_mesa }} ({{ mesa.get_estado_display }}) — {{ mesa.capacidad }} personas
+          </option>
+        {% endfor %}
+      </select>
+    </div>
+
+    <div class="form-group">
+      <label>Empleado</label>
+      <select name="id_empleado" required>
+        <option value="">— Selecciona un empleado —</option>
+        {% for emp in empleados %}
+          <option value="{{ emp.id_empleado }}"
+            {% if objeto.id_empleado.id_empleado == emp.id_empleado %}selected{% endif %}>
+            {{ emp.nombre }} {{ emp.apellido }} — {{ emp.cargo }}
+          </option>
+        {% endfor %}
+      </select>
+    </div>
+
+    <div class="form-group">
+      <label>Cliente (opcional)</label>
+      <select name="id_cliente">
+        <option value="">— Sin cliente asignado —</option>
+        {% for cli in clientes %}
+          <option value="{{ cli.id_cliente }}"
+            {% if objeto.id_cliente.id_cliente == cli.id_cliente %}selected{% endif %}>
+            {{ cli.nombre }} {{ cli.apellido }}
+          </option>
+        {% endfor %}
+      </select>
+    </div>
+
+    <div class="form-group">
+      <label>Estado</label>
+      <select name="estado">
+        <option value="pendiente"  {% if objeto.estado == 'pendiente'  %}selected{% endif %}>Pendiente</option>
+        <option value="en_proceso" {% if objeto.estado == 'en_proceso' %}selected{% endif %}>En proceso</option>
+        <option value="lista"      {% if objeto.estado == 'lista'      %}selected{% endif %}>Lista</option>
+        <option value="entregada"  {% if objeto.estado == 'entregada'  %}selected{% endif %}>Entregada</option>
+        <option value="cancelada"  {% if objeto.estado == 'cancelada'  %}selected{% endif %}>Cancelada</option>
+      </select>
+    </div>
+
+    <div class="form-actions">
+      <button type="submit" class="btn btn-primary">
+        {% if objeto %}💾 Guardar cambios{% else %}✅ Crear orden{% endif %}
+      </button>
+      <a href="{% url 'ordenes' %}" class="btn btn-secondary">← Cancelar</a>
+    </div>
+  </form>
+</div>
+{% endblock %}

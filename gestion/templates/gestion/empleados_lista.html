@@ -1,0 +1,54 @@
+{% extends 'gestion/base.html' %}
+
+{% block title %}Empleados — Pasta La Vista{% endblock %}
+
+{% block content %}
+<h2 class="page-title">👨‍🍳 Empleados</h2>
+
+<div class="toolbar">
+  <a href="{% url 'empleado_crear' %}" class="btn btn-primary">➕ Nuevo Empleado</a>
+  <div class="search-box">
+    <span>🔍</span>
+    <input type="text" id="buscador" placeholder="Buscar empleado...">
+  </div>
+</div>
+
+<div class="table-container">
+  <table id="tabla">
+    <thead>
+      <tr>
+        <th>#</th><th>Nombre</th><th>Cargo</th><th>Teléfono</th><th>Correo</th><th>Acciones</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for e in empleados %}
+      <tr>
+        <td>{{ e.pk }}</td>
+        <td>{{ e.nombre }}</td>
+        <td>{{ e.cargo }}</td>
+        <td>{{ e.telefono }}</td>
+        <td>{{ e.correo }}</td>
+        <td>
+          <a href="{% url 'empleado_editar' e.pk %}" class="btn btn-secondary btn-sm">✏️ Editar</a>
+          <a href="{% url 'empleado_eliminar' e.pk %}" class="btn btn-danger btn-sm"
+             onclick="return confirm('¿Eliminar empleado?')">🗑️ Eliminar</a>
+        </td>
+      </tr>
+      {% empty %}
+      <tr><td colspan="6" style="text-align:center;padding:30px;color:#999;">Sin empleados registrados.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.getElementById('buscador').addEventListener('input', function() {
+  const q = this.value.toLowerCase();
+  document.querySelectorAll('#tabla tbody tr').forEach(r => {
+    r.style.display = r.textContent.toLowerCase().includes(q) ? '' : 'none';
+  });
+});
+</script>
+{% endblock %}

@@ -1,0 +1,28 @@
+{% extends 'gestion/base.html' %}
+
+{% block title %}Facturas — Pasta La Vista{% endblock %}
+
+{% block content %}
+<h2 class="page-title">🧾 Facturas</h2>
+
+<div class="table-container">
+  <table>
+    <thead>
+      <tr><th>#</th><th>Orden</th><th>Fecha</th><th>Total</th><th>Método de Pago</th></tr>
+    </thead>
+    <tbody>
+      {% for f in facturas %}
+      <tr>
+        <td>{{ f.id_factura }}</td>
+        <td>Orden #{{ f.id_orden.id_orden }}</td>
+        <td>{{ f.fecha_factura|date:"d/m/Y H:i" }}</td>
+        <td style="color:var(--rojo);font-weight:700;">${{ f.total }}</td>
+        <td>{{ f.metodo_pago|default:"—" }}</td>
+      </tr>
+      {% empty %}
+      <tr><td colspan="5" style="text-align:center;padding:30px;color:#999;">Sin facturas registradas.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}
