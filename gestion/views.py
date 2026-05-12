@@ -1,8 +1,11 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth import authenticate, login, logout
-from django.contrib.auth.models import User
+from django.contrib.auth.models import User, Group
+from django.contrib.auth.decorators import login_required
+from django.core.exceptions import PermissionDenied
 from django.contrib import messages
 from .models import Cliente, Empleado, Mesa, Plato, Orden, Factura
+from .decorators import rol_requerido
 
 
 # ============================================================
@@ -56,6 +59,7 @@ def logout_view(request):
 # DASHBOARD
 # ============================================================
 
+@login_required
 def inicio(request):
     context = {
         'total_clientes':  Cliente.objects.count(),
@@ -69,14 +73,15 @@ def inicio(request):
 
 
 # ============================================================
-# CLIENTES — CRUD
+# CLIENTES — solo admin
 # ============================================================
 
+@rol_requerido('admin')
 def clientes_lista(request):
     clientes = Cliente.objects.all().order_by('nombre')
     return render(request, 'gestion/clientes_lista.html', {'clientes': clientes})
 
-
+@rol_requerido('admin')
 def cliente_crear(request):
     if request.method == 'POST':
         Cliente.objects.create(
@@ -88,7 +93,7 @@ def cliente_crear(request):
         return redirect('clientes')
     return render(request, 'gestion/cliente_form.html')
 
-
+@rol_requerido('admin')
 def cliente_editar(request, pk):
     cliente = get_object_or_404(Cliente, pk=pk)
     if request.method == 'POST':
@@ -100,7 +105,7 @@ def cliente_editar(request, pk):
         return redirect('clientes')
     return render(request, 'gestion/cliente_form.html', {'objeto': cliente})
 
-
+@rol_requerido('admin')
 def cliente_eliminar(request, pk):
     get_object_or_404(Cliente, pk=pk).delete()
     messages.success(request, 'Cliente eliminado.')
@@ -108,14 +113,15 @@ def cliente_eliminar(request, pk):
 
 
 # ============================================================
-# EMPLEADOS — CRUD
+# EMPLEADOS — solo admin
 # ============================================================
 
+@rol_requerido('admin')
 def empleados_lista(request):
     empleados = Empleado.objects.all().order_by('nombre')
     return render(request, 'gestion/empleados_lista.html', {'empleados': empleados})
 
-
+@rol_requerido('admin')
 def empleado_crear(request):
     if request.method == 'POST':
         Empleado.objects.create(
@@ -128,7 +134,7 @@ def empleado_crear(request):
         return redirect('empleados')
     return render(request, 'gestion/empleado_form.html')
 
-
+@rol_requerido('admin')
 def empleado_editar(request, pk):
     empleado = get_object_or_404(Empleado, pk=pk)
     if request.method == 'POST':
@@ -141,7 +147,7 @@ def empleado_editar(request, pk):
         return redirect('empleados')
     return render(request, 'gestion/empleado_form.html', {'objeto': empleado})
 
-
+@rol_requerido('admin')
 def empleado_eliminar(request, pk):
     get_object_or_404(Empleado, pk=pk).delete()
     messages.success(request, 'Empleado eliminado.')
@@ -149,14 +155,15 @@ def empleado_eliminar(request, pk):
 
 
 # ============================================================
-# MESAS — CRUD
+# MESAS — admin ve todo, mesero solo lista
 # ============================================================
 
+@rol_requerido('admin', 'mesero')
 def mesas_lista(request):
     mesas = Mesa.objects.all().order_by('numero_mesa')
     return render(request, 'gestion/mesas_lista.html', {'mesas': mesas})
 
-
+@rol_requerido('admin')
 def mesa_crear(request):
     if request.method == 'POST':
         Mesa.objects.create(
@@ -168,7 +175,7 @@ def mesa_crear(request):
         return redirect('mesas')
     return render(request, 'gestion/mesa_form.html')
 
-
+@rol_requerido('admin')
 def mesa_editar(request, pk):
     mesa = get_object_or_404(Mesa, pk=pk)
     if request.method == 'POST':
@@ -180,7 +187,7 @@ def mesa_editar(request, pk):
         return redirect('mesas')
     return render(request, 'gestion/mesa_form.html', {'objeto': mesa})
 
-
+@rol_requerido('admin')
 def mesa_eliminar(request, pk):
     get_object_or_404(Mesa, pk=pk).delete()
     messages.success(request, 'Mesa eliminada.')
@@ -188,14 +195,15 @@ def mesa_eliminar(request, pk):
 
 
 # ============================================================
-# PLATOS — CRUD
+# PLATOS — admin gestiona, mesero y caja solo ven lista
 # ============================================================
 
+@rol_requerido('admin', 'mesero', 'caja')
 def platos_lista(request):
     platos = Plato.objects.all().order_by('nombre_plato')
     return render(request, 'gestion/platos_lista.html', {'platos': platos})
 
-
+@rol_requerido('admin')
 def plato_crear(request):
     if request.method == 'POST':
         Plato.objects.create(
@@ -209,7 +217,7 @@ def plato_crear(request):
         return redirect('platos')
     return render(request, 'gestion/plato_form.html')
 
-
+@rol_requerido('admin')
 def plato_editar(request, pk):
     plato = get_object_or_404(Plato, pk=pk)
     if request.method == 'POST':
@@ -222,7 +230,7 @@ def plato_editar(request, pk):
         return redirect('platos')
     return render(request, 'gestion/plato_form.html', {'objeto': plato})
 
-
+@rol_requerido('admin')
 def plato_eliminar(request, pk):
     get_object_or_404(Plato, pk=pk).delete()
     messages.success(request, 'Plato eliminado.')
@@ -230,22 +238,23 @@ def plato_eliminar(request, pk):
 
 
 # ============================================================
-# ÓRDENES — CRUD
+# ÓRDENES — admin y mesero
 # ============================================================
 
+@rol_requerido('admin', 'mesero')
 def ordenes_lista(request):
     ordenes = Orden.objects.select_related(
         'mesa_id', 'empleado_id', 'cliente_id'
     ).all().order_by('-fecha_hora')
     return render(request, 'gestion/ordenes_lista.html', {'ordenes': ordenes})
 
-
+@rol_requerido('admin', 'mesero')
 def orden_crear(request):
     if request.method == 'POST':
         Orden.objects.create(
-            mesa_id     = get_object_or_404(Mesa,     pk=request.POST['id_mesa']),
-            empleado_id = get_object_or_404(Empleado, pk=request.POST['id_empleado']),
-            cliente_id  = get_object_or_404(Cliente,  pk=request.POST['id_cliente']) if request.POST.get('id_cliente') else None,
+            mesa_id      = get_object_or_404(Mesa,     pk=request.POST['id_mesa']),
+            empleado_id  = get_object_or_404(Empleado, pk=request.POST['id_empleado']),
+            cliente_id   = get_object_or_404(Cliente,  pk=request.POST['id_cliente']) if request.POST.get('id_cliente') else None,
             estado_orden = request.POST.get('estado', 'pendiente'),
             total        = 0,
         )
@@ -258,13 +267,13 @@ def orden_crear(request):
     }
     return render(request, 'gestion/orden_form.html', context)
 
-
+@rol_requerido('admin', 'mesero')
 def orden_editar(request, pk):
     orden = get_object_or_404(Orden, pk=pk)
     if request.method == 'POST':
-        orden.mesa_id     = get_object_or_404(Mesa,     pk=request.POST['id_mesa'])
-        orden.empleado_id = get_object_or_404(Empleado, pk=request.POST['id_empleado'])
-        orden.cliente_id  = get_object_or_404(Cliente,  pk=request.POST['id_cliente']) if request.POST.get('id_cliente') else None
+        orden.mesa_id      = get_object_or_404(Mesa,     pk=request.POST['id_mesa'])
+        orden.empleado_id  = get_object_or_404(Empleado, pk=request.POST['id_empleado'])
+        orden.cliente_id   = get_object_or_404(Cliente,  pk=request.POST['id_cliente']) if request.POST.get('id_cliente') else None
         orden.estado_orden = request.POST.get('estado', orden.estado_orden)
         orden.save()
         messages.success(request, 'Orden actualizada.')
@@ -277,7 +286,7 @@ def orden_editar(request, pk):
     }
     return render(request, 'gestion/orden_form.html', context)
 
-
+@rol_requerido('admin', 'mesero')
 def orden_eliminar(request, pk):
     get_object_or_404(Orden, pk=pk).delete()
     messages.success(request, 'Orden eliminada.')
@@ -285,9 +294,14 @@ def orden_eliminar(request, pk):
 
 
 # ============================================================
-# FACTURAS
+# FACTURAS — admin y caja
 # ============================================================
 
+@rol_requerido('admin', 'caja')
 def facturas_lista(request):
     facturas = Factura.objects.all().order_by('-fecha_factura')
     return render(request, 'gestion/facturas_lista.html', {'facturas': facturas})
+
+def error_403(request, exception):
+    return render(request, 'gestion/403.html', status=403)
+

@@ -104,3 +104,10 @@ MESSAGE_TAGS = {
     messages_constants.WARNING: 'warning',
     messages_constants.ERROR:   'error',
 }
+
+# Redirige a login si no está autenticado
+LOGIN_URL = '/login/'
+LOGIN_REDIRECT_URL = '/'
+
+# Al final de settings.py
+handler403 = 'gestion.views.error_403'
