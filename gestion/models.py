@@ -75,9 +75,9 @@ class Orden(models.Model):
     fecha_hora   = models.DateTimeField(auto_now_add=True)
     estado_orden = models.CharField(max_length=20, choices=ESTADOS, default='pendiente')
     total        = models.DecimalField(max_digits=10, decimal_places=2, default=0)
-    cliente_id   = models.ForeignKey(Cliente,  on_delete=models.PROTECT, db_column='cliente_id', null=True, blank=True)
-    empleado_id  = models.ForeignKey(Empleado, on_delete=models.PROTECT, db_column='empleado_id')
-    mesa_id      = models.ForeignKey(Mesa,     on_delete=models.PROTECT, db_column='mesa_id')
+    cliente_id   = models.ForeignKey('Cliente',  on_delete=models.PROTECT, db_column='cliente_id',  null=True, blank=True)
+    empleado_id = models.ForeignKey('Empleado', on_delete=models.PROTECT, db_column='empleado_id', null=True, blank=True)
+    mesa_id      = models.ForeignKey('Mesa',     on_delete=models.PROTECT, db_column='mesa_id')
 
     class Meta:
         db_table = 'OrdenRestaurante'
@@ -87,11 +87,20 @@ class Orden(models.Model):
 
 
 class DetalleOrden(models.Model):
-    cantidad       = models.IntegerField(default=1)
+    TERMINO_CHOICES = [
+        ('',             '— Sin especificar —'),
+        ('medio',        'Término medio'),
+        ('tres_cuartos', 'Tres cuartos'),
+        ('bien_cocido',  'Bien cocido'),
+    ]
+    cantidad        = models.IntegerField(default=1)
     precio_unitario = models.DecimalField(max_digits=10, decimal_places=2, null=True)
-    subtotal       = models.DecimalField(max_digits=10, decimal_places=2, null=True)
-    orden_id       = models.ForeignKey(Orden, on_delete=models.CASCADE, db_column='orden_id', related_name='detalles')
-    plato_id       = models.ForeignKey(Plato, on_delete=models.PROTECT, db_column='plato_id')
+    subtotal        = models.DecimalField(max_digits=10, decimal_places=2, null=True)
+    termino         = models.CharField(max_length=20, choices=TERMINO_CHOICES, blank=True, default='')
+    alergias        = models.TextField(blank=True, default='')
+    notas           = models.TextField(blank=True, default='')
+    orden_id        = models.ForeignKey(Orden, on_delete=models.CASCADE,  db_column='orden_id', related_name='detalles')
+    plato_id        = models.ForeignKey(Plato, on_delete=models.PROTECT,  db_column='plato_id')
 
     class Meta:
         db_table = 'Detalle_Orden'

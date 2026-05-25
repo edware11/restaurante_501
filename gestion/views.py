@@ -4,7 +4,7 @@ from django.contrib.auth.models import User, Group
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import PermissionDenied
 from django.contrib import messages
-from .models import Cliente, Empleado, Mesa, Plato, Orden, Factura
+from .models import Cliente, Empleado, Mesa, Plato, Orden, Factura, DetalleOrden
 from .decorators import rol_requerido
 
 
@@ -73,15 +73,15 @@ def inicio(request):
 
 
 # ============================================================
-# CLIENTES — solo admin
+# CLIENTES
 # ============================================================
 
-@rol_requerido('admin')
+@rol_requerido('admin', 'mesero')
 def clientes_lista(request):
     clientes = Cliente.objects.all().order_by('nombre')
     return render(request, 'gestion/clientes_lista.html', {'clientes': clientes})
 
-@rol_requerido('admin')
+@rol_requerido('admin', 'mesero')
 def cliente_crear(request):
     if request.method == 'POST':
         Cliente.objects.create(
@@ -155,7 +155,7 @@ def empleado_eliminar(request, pk):
 
 
 # ============================================================
-# MESAS — admin ve todo, mesero solo lista
+# MESAS
 # ============================================================
 
 @rol_requerido('admin', 'mesero')
@@ -193,17 +193,36 @@ def mesa_eliminar(request, pk):
     messages.success(request, 'Mesa eliminada.')
     return redirect('mesas')
 
+@rol_requerido('admin', 'mesero')
+def mesa_cambiar_estado(request, pk):
+    mesa = get_object_or_404(Mesa, pk=pk)
+    if request.method == 'POST':
+        nuevo_estado = request.POST.get('estado')
+        if nuevo_estado in ['disponible', 'ocupada', 'reservada']:
+            mesa.estado_mesa = nuevo_estado
+            mesa.save()
+            messages.success(request, f'Mesa {mesa.numero_mesa} marcada como {nuevo_estado}.')
+    return redirect('mesas')
+
 
 # ============================================================
-# PLATOS — admin gestiona, mesero y caja solo ven lista
+# PLATOS
 # ============================================================
 
 @rol_requerido('admin', 'mesero', 'caja')
 def platos_lista(request):
     platos = Plato.objects.all().order_by('nombre_plato')
-    return render(request, 'gestion/platos_lista.html', {'platos': platos})
+    platos_facturados = set(
+        DetalleOrden.objects.filter(
+            orden_id__factura__isnull=False
+        ).values_list('plato_id_id', flat=True)
+    )
+    return render(request, 'gestion/platos_lista.html', {
+        'platos': platos,
+        'platos_facturados': platos_facturados,
+    })
 
-@rol_requerido('admin')
+@rol_requerido('admin', 'mesero')
 def plato_crear(request):
     if request.method == 'POST':
         Plato.objects.create(
@@ -217,7 +236,7 @@ def plato_crear(request):
         return redirect('platos')
     return render(request, 'gestion/plato_form.html')
 
-@rol_requerido('admin')
+@rol_requerido('admin', 'mesero')
 def plato_editar(request, pk):
     plato = get_object_or_404(Plato, pk=pk)
     if request.method == 'POST':
@@ -230,7 +249,7 @@ def plato_editar(request, pk):
         return redirect('platos')
     return render(request, 'gestion/plato_form.html', {'objeto': plato})
 
-@rol_requerido('admin')
+@rol_requerido('admin', 'mesero')
 def plato_eliminar(request, pk):
     get_object_or_404(Plato, pk=pk).delete()
     messages.success(request, 'Plato eliminado.')
@@ -238,7 +257,7 @@ def plato_eliminar(request, pk):
 
 
 # ============================================================
-# ÓRDENES — admin y mesero
+# ÓRDENES
 # ============================================================
 
 @rol_requerido('admin', 'mesero')
@@ -248,43 +267,111 @@ def ordenes_lista(request):
     ).all().order_by('-fecha_hora')
     return render(request, 'gestion/ordenes_lista.html', {'ordenes': ordenes})
 
+
+def _procesar_detalles(request, orden):
+    """Helper compartido: lee los platos del POST, crea DetalleOrden y retorna el total."""
+    platos_texto = request.POST.getlist('plato_texto[]')
+    cantidades   = request.POST.getlist('cantidad[]')
+    terminos     = request.POST.getlist('termino[]')
+    alergias_l   = request.POST.getlist('alergias[]')
+    notas_l      = request.POST.getlist('notas[]')
+
+    total = 0
+    for i, nombre_plato in enumerate(platos_texto):
+        if not nombre_plato.strip():
+            continue
+
+        plato = Plato.objects.filter(nombre_plato=nombre_plato.strip()).first()
+        if not plato:
+            continue
+
+        precio   = plato.precio
+        cantidad = int(cantidades[i]) if i < len(cantidades) else 1
+        subtotal = precio * cantidad
+        total   += subtotal
+
+        DetalleOrden.objects.create(
+            orden_id        = orden,
+            plato_id        = plato,
+            cantidad        = cantidad,
+            precio_unitario = precio,
+            subtotal        = subtotal,
+            termino         = terminos[i]   if i < len(terminos)   else '',
+            alergias        = alergias_l[i] if i < len(alergias_l) else '',
+            notas           = notas_l[i]    if i < len(notas_l)    else '',
+        )
+
+    return total
+
+
 @rol_requerido('admin', 'mesero')
 def orden_crear(request):
     if request.method == 'POST':
-        Orden.objects.create(
-            mesa_id      = get_object_or_404(Mesa,     pk=request.POST['id_mesa']),
-            empleado_id  = get_object_or_404(Empleado, pk=request.POST['id_empleado']),
-            cliente_id   = get_object_or_404(Cliente,  pk=request.POST['id_cliente']) if request.POST.get('id_cliente') else None,
-            estado_orden = request.POST.get('estado', 'pendiente'),
+        mesa     = get_object_or_404(Mesa, pk=request.POST['id_mesa'])
+        empleado = get_object_or_404(Empleado, pk=request.POST['id_empleado'])
+        cliente  = get_object_or_404(Cliente, pk=request.POST['id_cliente']) if request.POST.get('id_cliente') else None
+
+        orden = Orden.objects.create(
+            mesa_id      = mesa,
+            empleado_id  = empleado,
+            cliente_id   = cliente,
+            estado_orden = 'pendiente',
             total        = 0,
         )
-        messages.success(request, 'Orden creada correctamente.')
+
+        mesa.estado_mesa = 'ocupada'
+        mesa.save()
+
+        orden.total = _procesar_detalles(request, orden)
+        orden.save()
+
+        messages.success(request, f'Orden #{orden.pk} creada. Mesero: {empleado.nombre}. Mesa {mesa.numero_mesa} marcada como ocupada.')
         return redirect('ordenes')
-    context = {
-        'mesas':     Mesa.objects.all().order_by('numero_mesa'),
-        'empleados': Empleado.objects.all().order_by('nombre'),
-        'clientes':  Cliente.objects.all().order_by('nombre'),
-    }
-    return render(request, 'gestion/orden_form.html', context)
+
+    mesas     = Mesa.objects.filter(estado_mesa='disponible').order_by('numero_mesa')
+    clientes  = Cliente.objects.all().order_by('nombre')
+    platos    = Plato.objects.filter(disponible=True).order_by('nombre_plato')
+    empleados = Empleado.objects.all().order_by('nombre')
+    return render(request, 'gestion/orden_form.html', {
+        'mesas':     mesas,
+        'clientes':  clientes,
+        'platos':    platos,
+        'empleados': empleados,
+    })
+
 
 @rol_requerido('admin', 'mesero')
 def orden_editar(request, pk):
     orden = get_object_or_404(Orden, pk=pk)
     if request.method == 'POST':
-        orden.mesa_id      = get_object_or_404(Mesa,     pk=request.POST['id_mesa'])
-        orden.empleado_id  = get_object_or_404(Empleado, pk=request.POST['id_empleado'])
-        orden.cliente_id   = get_object_or_404(Cliente,  pk=request.POST['id_cliente']) if request.POST.get('id_cliente') else None
+        mesa     = get_object_or_404(Mesa, pk=request.POST['id_mesa'])
+        empleado = get_object_or_404(Empleado, pk=request.POST['id_empleado'])
+        cliente  = get_object_or_404(Cliente, pk=request.POST['id_cliente']) if request.POST.get('id_cliente') else None
+
+        orden.mesa_id      = mesa
+        orden.empleado_id  = empleado
+        orden.cliente_id   = cliente
         orden.estado_orden = request.POST.get('estado', orden.estado_orden)
         orden.save()
-        messages.success(request, 'Orden actualizada.')
+
+        orden.detalles.all().delete()
+
+        orden.total = _procesar_detalles(request, orden)
+        orden.save()
+
+        messages.success(request, f'Orden #{orden.pk} actualizada.')
         return redirect('ordenes')
+
     context = {
         'objeto':    orden,
-        'mesas':     Mesa.objects.all().order_by('numero_mesa'),
-        'empleados': Empleado.objects.all().order_by('nombre'),
+        'detalles':  orden.detalles.all(),
+        'mesas':     Mesa.objects.filter(estado_mesa='disponible').order_by('numero_mesa'),
         'clientes':  Cliente.objects.all().order_by('nombre'),
+        'platos':    Plato.objects.filter(disponible=True).order_by('nombre_plato'),
+        'empleados': Empleado.objects.all().order_by('nombre'),
     }
     return render(request, 'gestion/orden_form.html', context)
+
 
 @rol_requerido('admin', 'mesero')
 def orden_eliminar(request, pk):
@@ -299,9 +386,55 @@ def orden_eliminar(request, pk):
 
 @rol_requerido('admin', 'caja')
 def facturas_lista(request):
-    facturas = Factura.objects.all().order_by('-fecha_factura')
-    return render(request, 'gestion/facturas_lista.html', {'facturas': facturas})
+    facturas = Factura.objects.select_related('orden_id').all().order_by('-fecha_factura')
+    ordenes_pendientes = Orden.objects.filter(
+        factura__isnull=True
+    ).exclude(
+        estado_orden='cancelada'
+    ).select_related('mesa_id', 'cliente_id').order_by('-fecha_hora')
+    return render(request, 'gestion/facturas_lista.html', {
+        'facturas': facturas,
+        'ordenes_pendientes': ordenes_pendientes,
+    })
+
+
+@rol_requerido('admin', 'caja')
+def factura_generar(request, orden_pk):
+    orden = get_object_or_404(Orden, pk=orden_pk)
+
+    if hasattr(orden, 'factura'):
+        messages.warning(request, f'La orden #{orden.pk} ya tiene factura generada.')
+        return redirect('facturas')
+
+    if request.method == 'POST':
+        metodo_pago   = request.POST.get('metodo_pago', 'efectivo')
+        subtotal      = orden.total
+        impuesto      = subtotal * 19 / 100
+        total_factura = subtotal + impuesto
+
+        Factura.objects.create(
+            orden_id      = orden,
+            metodo_pago   = metodo_pago,
+            subtotal      = subtotal,
+            impuesto      = impuesto,
+            total_factura = total_factura,
+        )
+
+        orden.mesa_id.estado_mesa = 'disponible'
+        orden.mesa_id.save()
+
+        orden.estado_orden = 'entregada'
+        orden.save()
+
+        messages.success(request, f'Factura generada para la orden #{orden.pk}.')
+        return redirect('facturas')
+
+    detalles = orden.detalles.select_related('plato_id').all()
+    return render(request, 'gestion/factura_form.html', {
+        'orden': orden,
+        'detalles': detalles,
+    })
+
 
 def error_403(request, exception):
     return render(request, 'gestion/403.html', status=403)
-

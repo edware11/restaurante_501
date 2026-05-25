@@ -1,63 +1,200 @@
 {% extends 'gestion/base.html' %}
-
 {% block title %}{% if objeto %}Editar{% else %}Nueva{% endif %} Orden — Pasta La Vista{% endblock %}
 
 {% block content %}
-<h2 class="page-title">{% if objeto %}✏️ Editar Orden #{{ objeto.id_orden }}{% else %}➕ Nueva Orden{% endif %}</h2>
+<h2 class="page-title">{% if objeto %}✏️ Editar Orden #{{ objeto.pk }}{% else %}➕ Nueva Orden{% endif %}</h2>
 
 <div class="form-container">
   <form method="post">
     {% csrf_token %}
 
+    {# ── Mesa ── #}
     <div class="form-group">
-      <label>Mesa</label>
+      <label>Mesa * <small style="color:#666;">(solo mesas libres)</small></label>
       <select name="id_mesa" required>
         <option value="">— Selecciona una mesa —</option>
         {% for mesa in mesas %}
-          <option value="{{ mesa.id_mesa }}"
-            {% if objeto.id_mesa.id_mesa == mesa.id_mesa %}selected{% endif %}>
-            Mesa {{ mesa.numero_mesa }} ({{ mesa.get_estado_display }}) — {{ mesa.capacidad }} personas
+          <option value="{{ mesa.pk }}"
+            {% if objeto and objeto.mesa_id.pk == mesa.pk %}selected{% endif %}>
+            Mesa {{ mesa.numero_mesa }} — {{ mesa.capacidad }} personas
           </option>
+        {% empty %}
+          <option disabled>No hay mesas libres disponibles</option>
         {% endfor %}
       </select>
+      {% if not mesas %}
+        <p style="color:#991b1b;font-size:0.85rem;margin-top:6px;">
+          ⚠️ Todas las mesas están ocupadas o reservadas. Cambia el estado de una mesa primero.
+        </p>
+      {% endif %}
     </div>
 
+    {# ── Mesero / Empleado ── #}
     <div class="form-group">
-      <label>Empleado</label>
+      <label>Mesero * <small style="color:#666;">(responsable de la orden)</small></label>
       <select name="id_empleado" required>
-        <option value="">— Selecciona un empleado —</option>
+        <option value="">— Selecciona un mesero —</option>
         {% for emp in empleados %}
-          <option value="{{ emp.id_empleado }}"
-            {% if objeto.id_empleado.id_empleado == emp.id_empleado %}selected{% endif %}>
-            {{ emp.nombre }} {{ emp.apellido }} — {{ emp.cargo }}
+          <option value="{{ emp.pk }}"
+            {% if objeto and objeto.empleado_id and objeto.empleado_id.pk == emp.pk %}selected{% endif %}>
+            {{ emp.nombre }} — {{ emp.cargo }}
           </option>
         {% endfor %}
       </select>
+      {% if not empleados %}
+        <p style="color:#991b1b;font-size:0.85rem;margin-top:6px;">
+          ⚠️ No hay empleados registrados.
+          <a href="{% url 'empleado_crear' %}">Registrar uno primero</a>.
+        </p>
+      {% endif %}
     </div>
 
+    {# ── Cliente ── #}
     <div class="form-group">
-      <label>Cliente (opcional)</label>
-      <select name="id_cliente">
-        <option value="">— Sin cliente asignado —</option>
+      <label>Cliente *</label>
+      <select name="id_cliente" required>
+        <option value="">— Selecciona un cliente —</option>
         {% for cli in clientes %}
-          <option value="{{ cli.id_cliente }}"
-            {% if objeto.id_cliente.id_cliente == cli.id_cliente %}selected{% endif %}>
-            {{ cli.nombre }} {{ cli.apellido }}
+          <option value="{{ cli.pk }}"
+            {% if objeto and objeto.cliente_id and objeto.cliente_id.pk == cli.pk %}selected{% endif %}>
+            #{{ cli.pk }} — {{ cli.nombre }}
           </option>
         {% endfor %}
       </select>
     </div>
 
+    {# ── Estado (solo al editar) ── #}
+    {% if objeto %}
     <div class="form-group">
       <label>Estado</label>
       <select name="estado">
-        <option value="pendiente"  {% if objeto.estado == 'pendiente'  %}selected{% endif %}>Pendiente</option>
-        <option value="en_proceso" {% if objeto.estado == 'en_proceso' %}selected{% endif %}>En proceso</option>
-        <option value="lista"      {% if objeto.estado == 'lista'      %}selected{% endif %}>Lista</option>
-        <option value="entregada"  {% if objeto.estado == 'entregada'  %}selected{% endif %}>Entregada</option>
-        <option value="cancelada"  {% if objeto.estado == 'cancelada'  %}selected{% endif %}>Cancelada</option>
+        <option value="pendiente"   {% if objeto.estado_orden == 'pendiente'   %}selected{% endif %}>Pendiente</option>
+        <option value="en_proceso"  {% if objeto.estado_orden == 'en_proceso'  %}selected{% endif %}>En proceso</option>
+        <option value="lista"       {% if objeto.estado_orden == 'lista'       %}selected{% endif %}>Lista</option>
+        <option value="entregada"   {% if objeto.estado_orden == 'entregada'   %}selected{% endif %}>Entregada</option>
+        <option value="cancelada"   {% if objeto.estado_orden == 'cancelada'   %}selected{% endif %}>Cancelada</option>
       </select>
     </div>
+    {% endif %}
+
+    {# ── Platos ── #}
+    <hr style="margin:24px 0;">
+    <h3 style="margin-bottom:16px;">🍽️ Platos de la orden <small style="font-size:0.8rem;color:#666;">(mínimo 1, máximo 9)</small></h3>
+
+    <div id="platos-container">
+
+      {# — Modo EDICIÓN: renderiza los detalles existentes con el plato ya seleccionado — #}
+      {% if objeto and detalles %}
+        {% for d in detalles %}
+        <div class="plato-row" style="border:1px solid #e2e8f0;border-radius:10px;padding:16px;margin-bottom:12px;background:#f8fafc;">
+          <div style="display:grid;grid-template-columns:2fr 1fr 1fr;gap:12px;margin-bottom:10px;">
+
+            <div class="form-group" style="margin:0;">
+              <label>Plato *</label>
+              <select name="plato_texto[]" required>
+                <option value="">— Selecciona un plato —</option>
+                {% for p in platos %}
+                  <option value="{{ p.nombre_plato }}"
+                    {% if p.nombre_plato == d.plato_id.nombre_plato %}selected{% endif %}>
+                    {{ p.nombre_plato }} — ${{ p.precio }}
+                  </option>
+                {% endfor %}
+              </select>
+            </div>
+
+            <div class="form-group" style="margin:0;">
+              <label>Cantidad *</label>
+              <input type="number" name="cantidad[]" value="{{ d.cantidad }}" min="1" max="9" required>
+            </div>
+
+            <div class="form-group" style="margin:0;">
+              <label>Término</label>
+              <select name="termino[]">
+                <option value=""             {% if d.termino == ''             %}selected{% endif %}>— Sin especificar —</option>
+                <option value="medio"        {% if d.termino == 'medio'        %}selected{% endif %}>Término medio</option>
+                <option value="tres_cuartos" {% if d.termino == 'tres_cuartos' %}selected{% endif %}>Tres cuartos</option>
+                <option value="bien_cocido"  {% if d.termino == 'bien_cocido'  %}selected{% endif %}>Bien cocido</option>
+              </select>
+            </div>
+          </div>
+
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+            <div class="form-group" style="margin:0;">
+              <label>⚠️ Alergias</label>
+              <input type="text" name="alergias[]" value="{{ d.alergias }}" placeholder="Ej: maní, lactosa...">
+            </div>
+            <div class="form-group" style="margin:0;">
+              <label>📝 Notas</label>
+              <input type="text" name="notas[]" value="{{ d.notas }}" placeholder="Ej: sin sal, extra salsa...">
+            </div>
+          </div>
+
+          <div style="text-align:right;margin-top:8px;">
+            <button type="button" onclick="eliminarPlato(this)"
+              style="background:#fee2e2;color:#991b1b;border:none;padding:4px 12px;border-radius:6px;cursor:pointer;">
+              🗑️ Quitar
+            </button>
+          </div>
+        </div>
+        {% endfor %}
+
+      {# — Modo CREACIÓN: una fila vacía inicial — #}
+      {% else %}
+        <div class="plato-row" style="border:1px solid #e2e8f0;border-radius:10px;padding:16px;margin-bottom:12px;background:#f8fafc;">
+          <div style="display:grid;grid-template-columns:2fr 1fr 1fr;gap:12px;margin-bottom:10px;">
+
+            <div class="form-group" style="margin:0;">
+              <label>Plato *</label>
+              <select name="plato_texto[]" required>
+                <option value="">— Selecciona un plato —</option>
+                {% for p in platos %}
+                  <option value="{{ p.nombre_plato }}">{{ p.nombre_plato }} — ${{ p.precio }}</option>
+                {% endfor %}
+              </select>
+            </div>
+
+            <div class="form-group" style="margin:0;">
+              <label>Cantidad *</label>
+              <input type="number" name="cantidad[]" value="1" min="1" max="9" required>
+            </div>
+
+            <div class="form-group" style="margin:0;">
+              <label>Término</label>
+              <select name="termino[]">
+                <option value="">— Sin especificar —</option>
+                <option value="medio">Término medio</option>
+                <option value="tres_cuartos">Tres cuartos</option>
+                <option value="bien_cocido">Bien cocido</option>
+              </select>
+            </div>
+          </div>
+
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+            <div class="form-group" style="margin:0;">
+              <label>⚠️ Alergias</label>
+              <input type="text" name="alergias[]" placeholder="Ej: maní, lactosa...">
+            </div>
+            <div class="form-group" style="margin:0;">
+              <label>📝 Notas</label>
+              <input type="text" name="notas[]" placeholder="Ej: sin sal, extra salsa...">
+            </div>
+          </div>
+
+          <div style="text-align:right;margin-top:8px;">
+            <button type="button" onclick="eliminarPlato(this)"
+              style="background:#fee2e2;color:#991b1b;border:none;padding:4px 12px;border-radius:6px;cursor:pointer;">
+              🗑️ Quitar
+            </button>
+          </div>
+        </div>
+      {% endif %}
+
+    </div>{# fin #platos-container #}
+
+    <button type="button" id="btn-agregar" onclick="agregarPlato()"
+      style="background:#e0f2fe;color:#0369a1;border:none;padding:8px 18px;border-radius:8px;cursor:pointer;font-weight:600;margin-bottom:20px;">
+      ➕ Agregar otro plato
+    </button>
 
     <div class="form-actions">
       <button type="submit" class="btn btn-primary">
@@ -67,4 +204,86 @@
     </div>
   </form>
 </div>
+
+{# ── Template JS para filas nuevas ── #}
+<template id="plato-template">
+  <div class="plato-row" style="border:1px solid #e2e8f0;border-radius:10px;padding:16px;margin-bottom:12px;background:#f8fafc;">
+    <div style="display:grid;grid-template-columns:2fr 1fr 1fr;gap:12px;margin-bottom:10px;">
+      <div class="form-group" style="margin:0;">
+        <label>Plato *</label>
+        <select name="plato_texto[]" required></select>{# opciones inyectadas por JS #}
+      </div>
+      <div class="form-group" style="margin:0;">
+        <label>Cantidad *</label>
+        <input type="number" name="cantidad[]" value="1" min="1" max="9" required>
+      </div>
+      <div class="form-group" style="margin:0;">
+        <label>Término</label>
+        <select name="termino[]">
+          <option value="">— Sin especificar —</option>
+          <option value="medio">Término medio</option>
+          <option value="tres_cuartos">Tres cuartos</option>
+          <option value="bien_cocido">Bien cocido</option>
+        </select>
+      </div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+      <div class="form-group" style="margin:0;">
+        <label>⚠️ Alergias</label>
+        <input type="text" name="alergias[]" placeholder="Ej: maní, lactosa...">
+      </div>
+      <div class="form-group" style="margin:0;">
+        <label>📝 Notas</label>
+        <input type="text" name="notas[]" placeholder="Ej: sin sal, extra salsa...">
+      </div>
+    </div>
+    <div style="text-align:right;margin-top:8px;">
+      <button type="button" onclick="eliminarPlato(this)"
+        style="background:#fee2e2;color:#991b1b;border:none;padding:4px 12px;border-radius:6px;cursor:pointer;">
+        🗑️ Quitar
+      </button>
+    </div>
+  </div>
+</template>
+
+{# Opciones serializadas para el template JS #}
+<script>
+  const PLATOS_OPTIONS = `<option value="">— Selecciona un plato —</option>{% for p in platos %}<option value="{{ p.nombre_plato }}">{{ p.nombre_plato }} — ${{ p.precio }}</option>{% endfor %}`;
+</script>
+
+{% block extra_js %}
+<script>
+  const MAX_PLATOS = 9;
+
+  function contarPlatos() {
+    return document.querySelectorAll('.plato-row').length;
+  }
+
+  function agregarPlato() {
+    if (contarPlatos() >= MAX_PLATOS) {
+      alert('Máximo 9 platos por orden.');
+      return;
+    }
+    const clone = document.getElementById('plato-template').content.cloneNode(true);
+    clone.querySelector('select[name="plato_texto[]"]').innerHTML = PLATOS_OPTIONS;
+    document.getElementById('platos-container').appendChild(clone);
+    actualizarBoton();
+  }
+
+  function eliminarPlato(btn) {
+    if (contarPlatos() <= 1) {
+      alert('Debe haber al menos 1 plato en la orden.');
+      return;
+    }
+    btn.closest('.plato-row').remove();
+    actualizarBoton();
+  }
+
+  function actualizarBoton() {
+    const btn = document.getElementById('btn-agregar');
+    btn.disabled = contarPlatos() >= MAX_PLATOS;
+    btn.style.opacity = contarPlatos() >= MAX_PLATOS ? '0.4' : '1';
+  }
+</script>
+{% endblock %}
 {% endblock %}

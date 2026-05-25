@@ -22,14 +22,18 @@
       {% for p in platos %}
       <tr>
         <td>{{ p.pk }}</td>
-        <td><strong>{{ p.nombre }}</strong></td>
+        <td><strong>{{ p.nombre_plato }}</strong></td>
         <td>{{ p.categoria }}</td>
         <td style="color:var(--rojo);font-weight:700;">${{ p.precio }}</td>
         <td style="max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">{{ p.descripcion }}</td>
         <td>
-          <a href="{% url 'plato_editar' p.pk %}" class="btn btn-secondary btn-sm">✏️ Editar</a>
-          <a href="{% url 'plato_eliminar' p.pk %}" class="btn btn-danger btn-sm"
-             onclick="return confirm('¿Eliminar {{ p.nombre }}?')">🗑️</a>
+          {% if p.pk in platos_facturados %}
+            <span style="font-size:0.78rem;color:#6b7280;font-style:italic;">🔒 Facturado</span>
+          {% else %}
+            <a href="{% url 'plato_editar' p.pk %}" class="btn btn-secondary btn-sm">✏️ Editar</a>
+            <a href="{% url 'plato_eliminar' p.pk %}" class="btn btn-danger btn-sm"
+               onclick="return confirm('¿Eliminar {{ p.nombre_plato }}?')">🗑️</a>
+          {% endif %}
         </td>
       </tr>
       {% empty %}

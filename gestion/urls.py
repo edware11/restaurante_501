@@ -28,6 +28,7 @@ urlpatterns = [
     path('mesas/nueva/',                   views.mesa_crear,    name='mesa_crear'),
     path('mesas/<int:pk>/editar/',         views.mesa_editar,   name='mesa_editar'),
     path('mesas/<int:pk>/eliminar/',       views.mesa_eliminar, name='mesa_eliminar'),
+    path('mesas/<int:pk>/estado/', views.mesa_cambiar_estado, name='mesa_cambiar_estado'),
 
     # ── Platos ─────────────────────────────────────────────
     path('platos/',                        views.platos_lista,   name='platos'),
@@ -42,5 +43,6 @@ urlpatterns = [
     path('ordenes/<int:pk>/eliminar/',     views.orden_eliminar,  name='orden_eliminar'),
 
     # ── Facturas ───────────────────────────────────────────
-    path('facturas/',                      views.facturas_lista, name='facturas'),
+    path('facturas/',                         views.facturas_lista,  name='facturas'),
+ path('facturas/generar/<int:orden_pk>/',  views.factura_generar, name='factura_generar'),
 ]

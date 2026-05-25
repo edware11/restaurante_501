@@ -1,0 +1,70 @@
+{% extends 'gestion/base.html' %}
+
+{% block title %}Generar Factura — Pasta La Vista{% endblock %}
+
+{% block content %}
+<h2 class="page-title">🧾 Generar Factura — Orden #{{ orden.pk }}</h2>
+
+<div class="table-container" style="max-width:650px;">
+
+  <table>
+    <thead>
+      <tr><th colspan="2">Información de la Orden</th></tr>
+    </thead>
+    <tbody>
+      <tr><td><strong>Mesa</strong></td><td>Mesa {{ orden.mesa_id.numero_mesa }}</td></tr>
+      <tr><td><strong>Cliente</strong></td><td>{{ orden.cliente_id.nombre|default:"Sin cliente" }}</td></tr>
+      <tr><td><strong>Estado</strong></td><td>{{ orden.get_estado_orden_display }}</td></tr>
+      <tr><td><strong>Fecha</strong></td><td>{{ orden.fecha_hora|date:"d/m/Y H:i" }}</td></tr>
+    </tbody>
+  </table>
+
+  <br>
+
+  <table>
+    <thead>
+      <tr><th>Plato</th><th>Cantidad</th><th>Precio unit.</th><th>Subtotal</th></tr>
+    </thead>
+    <tbody>
+      {% for d in detalles %}
+      <tr>
+        <td>{{ d.plato_id.nombre_plato }}</td>
+        <td>{{ d.cantidad }}</td>
+        <td>${{ d.precio_unitario }}</td>
+        <td>${{ d.subtotal }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+    <tfoot>
+      <tr>
+        <td colspan="3" style="text-align:right;"><strong>Subtotal:</strong></td>
+        <td>${{ orden.total }}</td>
+      </tr>
+      <tr>
+        <td colspan="3" style="text-align:right;"><strong>IVA (19%):</strong></td>
+        <td>${{ orden.total|floatformat:2 }}</td>
+      </tr>
+    </tfoot>
+  </table>
+
+  <br>
+
+  <form method="post">
+    {% csrf_token %}
+    <div style="margin-bottom:16px;">
+      <label style="font-weight:600;">MÉTODO DE PAGO</label><br><br>
+      <select name="metodo_pago" style="width:100%;padding:10px;border-radius:8px;border:1px solid #ccc;font-size:15px;">
+        <option value="efectivo">💵 Efectivo</option>
+        <option value="tarjeta">💳 Tarjeta</option>
+        <option value="transferencia">🏦 Transferencia</option>
+        <option value="nequi">📱 Nequi / Daviplata</option>
+      </select>
+    </div>
+    <div style="display:flex;gap:12px;">
+      <button type="submit" class="btn btn-primary">✅ Generar Factura</button>
+      <a href="{% url 'facturas' %}" class="btn btn-secondary">Cancelar</a>
+    </div>
+  </form>
+
+</div>
+{% endblock %}

@@ -19,19 +19,54 @@
 
   <!-- NAVEGACIÓN -->
   <nav>
-    <a href="{% url 'inicio' %}"       {% if request.resolver_match.url_name == 'inicio'     %}class="active"{% endif %}>Inicio</a>
-    <a href="{% url 'clientes' %}"     {% if 'cliente' in request.resolver_match.url_name    %}class="active"{% endif %}>Clientes</a>
-    <a href="{% url 'empleados' %}"    {% if 'empleado' in request.resolver_match.url_name   %}class="active"{% endif %}>Empleados</a>
-    <a href="{% url 'mesas' %}"        {% if 'mesa' in request.resolver_match.url_name        %}class="active"{% endif %}>Mesas</a>
-    <a href="{% url 'platos' %}"       {% if 'plato' in request.resolver_match.url_name       %}class="active"{% endif %}>Platos</a>
-    <a href="{% url 'ordenes' %}"      {% if 'orden' in request.resolver_match.url_name       %}class="active"{% endif %}>Órdenes</a>
-    <a href="{% url 'facturas' %}"     {% if 'factura' in request.resolver_match.url_name     %}class="active"{% endif %}>Facturas</a>
-    {% if user.is_authenticated %}
-      <a href="{% url 'logout' %}"     style="margin-left:auto;">👤 {{ user.username }} | Salir</a>
-    {% else %}
-      <a href="{% url 'login' %}"      {% if request.resolver_match.url_name == 'login'      %}class="active"{% endif %}>🔑 Login</a>
+    <a href="{% url 'inicio' %}" {% if request.resolver_match.url_name == 'inicio' %}class="active"{% endif %}>Inicio</a>
+
+    {# ── Clientes: admin y mesero ── #}
+    {% if user.is_superuser or user.groups.all|length > 0 %}
+      {% with grupos=user.groups.values_list|join:"," %}
+        {% if user.is_superuser or 'admin' in grupos or 'mesero' in grupos %}
+          <a href="{% url 'clientes' %}" {% if 'cliente' in request.resolver_match.url_name %}class="active"{% endif %}>Clientes</a>
+        {% endif %}
+
+        {# ── Empleados: solo admin ── #}
+        {% if user.is_superuser or 'admin' in grupos %}
+          <a href="{% url 'empleados' %}" {% if 'empleado' in request.resolver_match.url_name %}class="active"{% endif %}>Empleados</a>
+        {% endif %}
+
+        {# ── Mesas: admin y mesero ── #}
+        {% if user.is_superuser or 'admin' in grupos or 'mesero' in grupos %}
+          <a href="{% url 'mesas' %}" {% if 'mesa' in request.resolver_match.url_name %}class="active"{% endif %}>Mesas</a>
+        {% endif %}
+
+        {# ── Platos: admin, mesero y caja ── #}
+        {% if user.is_superuser or 'admin' in grupos or 'mesero' in grupos or 'caja' in grupos %}
+          <a href="{% url 'platos' %}" {% if 'plato' in request.resolver_match.url_name %}class="active"{% endif %}>Platos</a>
+        {% endif %}
+
+        {# ── Órdenes: admin y mesero ── #}
+        {% if user.is_superuser or 'admin' in grupos or 'mesero' in grupos %}
+          <a href="{% url 'ordenes' %}" {% if 'orden' in request.resolver_match.url_name %}class="active"{% endif %}>Órdenes</a>
+        {% endif %}
+
+        {# ── Facturas: admin y caja ── #}
+        {% if user.is_superuser or 'admin' in grupos or 'caja' in grupos %}
+          <a href="{% url 'facturas' %}" {% if 'factura' in request.resolver_match.url_name %}class="active"{% endif %}>Facturas</a>
+        {% endif %}
+      {% endwith %}
     {% endif %}
-    <a href="/admin/"                  target="_blank">⚙️ Admin</a>
+
+    {% if user.is_authenticated %}
+      <a href="{% url 'logout' %}" style="margin-left:auto;">👤 {{ user.username }} | Salir</a>
+    {% else %}
+      <a href="{% url 'login' %}" {% if request.resolver_match.url_name == 'login' %}class="active"{% endif %}>🔑 Login</a>
+    {% endif %}
+
+    {# ── Enlace Admin: solo admin/superusuario ── #}
+    {% if user.is_superuser or user.groups.filter %}
+      {% if user.is_superuser %}
+        <a href="/admin/" target="_blank">⚙️ Admin</a>
+      {% endif %}
+    {% endif %}
   </nav>
 
   <!-- MENSAJES DJANGO -->

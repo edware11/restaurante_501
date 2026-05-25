@@ -5,22 +5,52 @@
 {% block content %}
 <h2 class="page-title">🧾 Facturas</h2>
 
+{% if ordenes_pendientes %}
+<h3 style="margin-bottom:12px;color:var(--azul);">⏳ Órdenes pendientes de cobro</h3>
+<div class="table-container" style="margin-bottom:40px;">
+  <table>
+    <thead>
+      <tr><th>#</th><th>Mesa</th><th>Cliente</th><th>Total</th><th>Estado</th><th>Acción</th></tr>
+    </thead>
+    <tbody>
+      {% for o in ordenes_pendientes %}
+      <tr>
+        <td>{{ o.pk }}</td>
+        <td>Mesa {{ o.mesa_id.numero_mesa }}</td>
+        <td>{{ o.cliente_id.nombre|default:"—" }}</td>
+        <td style="color:var(--rojo);font-weight:700;">${{ o.total }}</td>
+        <td>{{ o.get_estado_orden_display }}</td>
+        <td>
+          <a href="{% url 'factura_generar' o.pk %}" class="btn btn-primary btn-sm">💳 Facturar</a>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% else %}
+<p style="color:#999;margin-bottom:30px;">No hay órdenes pendientes de cobro.</p>
+{% endif %}
+
+<h3 style="margin-bottom:12px;">📋 Historial de facturas</h3>
 <div class="table-container">
   <table>
     <thead>
-      <tr><th>#</th><th>Orden</th><th>Fecha</th><th>Total</th><th>Método de Pago</th></tr>
+      <tr><th>#</th><th>Orden</th><th>Fecha</th><th>Subtotal</th><th>IVA</th><th>Total</th><th>Método de Pago</th></tr>
     </thead>
     <tbody>
       {% for f in facturas %}
       <tr>
-        <td>{{ f.id_factura }}</td>
-        <td>Orden #{{ f.id_orden.id_orden }}</td>
+        <td>{{ f.pk }}</td>
+        <td>Orden #{{ f.orden_id.pk }}</td>
         <td>{{ f.fecha_factura|date:"d/m/Y H:i" }}</td>
-        <td style="color:var(--rojo);font-weight:700;">${{ f.total }}</td>
+        <td>${{ f.subtotal }}</td>
+        <td>${{ f.impuesto }}</td>
+        <td style="color:var(--rojo);font-weight:700;">${{ f.total_factura }}</td>
         <td>{{ f.metodo_pago|default:"—" }}</td>
       </tr>
       {% empty %}
-      <tr><td colspan="5" style="text-align:center;padding:30px;color:#999;">Sin facturas registradas.</td></tr>
+      <tr><td colspan="7" style="text-align:center;padding:30px;color:#999;">Sin facturas registradas.</td></tr>
       {% endfor %}
     </tbody>
   </table>
