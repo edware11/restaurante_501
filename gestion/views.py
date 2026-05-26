@@ -209,7 +209,7 @@ def mesa_cambiar_estado(request, pk):
 # PLATOS
 # ============================================================
 
-@rol_requerido('admin', 'mesero', 'caja')
+@rol_requerido('admin', 'mesero')
 def platos_lista(request):
     platos = Plato.objects.all().order_by('nombre_plato')
     platos_facturados = set(
@@ -260,7 +260,7 @@ def plato_eliminar(request, pk):
 # ÓRDENES
 # ============================================================
 
-@rol_requerido('admin', 'mesero')
+@rol_requerido('admin', 'mesero', 'caja')
 def ordenes_lista(request):
     ordenes = Orden.objects.select_related(
         'mesa_id', 'empleado_id', 'cliente_id'

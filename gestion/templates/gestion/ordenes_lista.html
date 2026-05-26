@@ -36,9 +36,14 @@
           </span>
         </td>
         <td>
-          <a href="{% url 'orden_editar' o.pk %}" class="btn btn-secondary btn-sm">✏️ Editar</a>
-          <a href="{% url 'orden_eliminar' o.pk %}" class="btn btn-danger btn-sm"
-             onclick="return confirm('¿Eliminar orden #{{ o.pk }}?')">🗑️</a>
+          {% if o.estado_orden == 'entregada' %}
+            <a href="{% url 'orden_eliminar' o.pk %}" class="btn btn-danger btn-sm"
+               onclick="return confirm('¿Eliminar orden #{{ o.pk }}?')">🗑️</a>
+          {% else %}
+            <a href="{% url 'orden_editar' o.pk %}" class="btn btn-secondary btn-sm">✏️ Editar</a>
+            <a href="{% url 'orden_eliminar' o.pk %}" class="btn btn-danger btn-sm"
+               onclick="return confirm('¿Eliminar orden #{{ o.pk }}?')">🗑️</a>
+          {% endif %}
         </td>
       </tr>
       {% empty %}

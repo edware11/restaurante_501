@@ -38,14 +38,14 @@
           <a href="{% url 'mesas' %}" {% if 'mesa' in request.resolver_match.url_name %}class="active"{% endif %}>Mesas</a>
         {% endif %}
 
-        {# ── Platos: admin, mesero y caja ── #}
-        {% if user.is_superuser or 'admin' in grupos or 'mesero' in grupos or 'caja' in grupos %}
-          <a href="{% url 'platos' %}" {% if 'plato' in request.resolver_match.url_name %}class="active"{% endif %}>Platos</a>
+        {# ── Platos: admin y mesero (ya NO caja) ── #}
+        {% if user.is_superuser or 'admin' in grupos or 'mesero' in grupos %}
+        <a href="{% url 'platos' %}" {% if 'plato' in request.resolver_match.url_name %}class="active"{% endif %}>Platos</a>
         {% endif %}
 
-        {# ── Órdenes: admin y mesero ── #}
-        {% if user.is_superuser or 'admin' in grupos or 'mesero' in grupos %}
-          <a href="{% url 'ordenes' %}" {% if 'orden' in request.resolver_match.url_name %}class="active"{% endif %}>Órdenes</a>
+        {# ── Órdenes: admin, mesero y caja ── #}
+        {% if user.is_superuser or 'admin' in grupos or 'mesero' in grupos or 'caja' in grupos %}
+        <a href="{% url 'ordenes' %}" {% if 'orden' in request.resolver_match.url_name %}class="active"{% endif %}>Órdenes</a>
         {% endif %}
 
         {# ── Facturas: admin y caja ── #}
